@@ -131,7 +131,7 @@ function generateStatusSVG({ status, emoji, message, activity, updated_at, user,
       
       <!-- Main status content with Inter font -->
       <text x="45" y="${Math.min(height / 2 - 5, 30)}" fill="${currentTheme.textPrimary}" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="${Math.min(width / 25, 16)}" font-weight="600" letter-spacing="-0.02em">
-        ${emoji} ${currentWork}
+        ${currentWork}
       </text>
       
       <!-- Enhanced info line with Inter font -->
