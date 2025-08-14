@@ -35,5 +35,17 @@ This project is actively maintained.
 | Default | ![Default](https://github-status-badge.vercel.app/api/badge?username=rahuljangirworks&style=minimal&theme=default&width=350&height=80) |
 
 
+![Status](https://github-status-badge.vercel.app/api/badge?username=rahuljangirworks&style=minimal&theme=github&width=500&height=80)
+
+
+
+![Status](https://github-status-badge.vercel.app/api/badge?username=rahuljangirworks&style=minimal&theme=github&width=500&height=80&bg=transparent)
+
+
+![Compact](https://github-status-badge.vercel.app/api/badge?username=rahuljangirworks&width=350&height=70&bg=transparent)
+
+
+![Large](https://github-status-badge.vercel.app/api/badge?username=rahuljangirworks&width=600&height=100&bg=transparent)
+
 
 

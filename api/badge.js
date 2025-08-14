@@ -38,7 +38,6 @@ export default async function handler(req, res) {
       updated_at: statusData.updated_at,
       user: userData,
       location: `${userData.city || ''}, ${userData.country || ''}`.replace(/^,\s*|,\s*$/g, ''),
-      duration_minutes: statusData.status_duration_minutes,
       theme,
       style,
       width: parseInt(width),
@@ -62,7 +61,7 @@ export default async function handler(req, res) {
   }
 }
 
-function generateStatusSVG({ status, emoji, message, activity, updated_at, user, location, duration_minutes, theme, style, width, height, transparent }) {
+function generateStatusSVG({ status, emoji, message, activity, updated_at, user, location, theme, style, width, height, transparent }) {
   const themes = getThemes();
   const currentTheme = themes[theme] || themes.github;
   const displayText = activity || message || status;
@@ -75,17 +74,16 @@ function generateStatusSVG({ status, emoji, message, activity, updated_at, user,
   const experience = user.years_experience || 'N/A';
   const currentWork = activity || message || 'Working on projects';
 
-  // Build info array with all stats separated by •
+  // Build info array (removed duration_minutes)
   const infoItems = [
     location || 'Remote Developer',
     localTime ? `${localTime} local` : null,
     timeAgo,
-    duration_minutes ? `Active ${Math.round(duration_minutes)}m` : null,
     skillsCount > 0 ? `${skillsCount}+ skills` : null,
     experience !== 'N/A' ? `${experience}y exp` : null
   ].filter(Boolean);
 
-  // Minimal, professional, responsive design
+  // Modern, professional design with enhanced status pulse
   return `
     <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -93,38 +91,53 @@ function generateStatusSVG({ status, emoji, message, activity, updated_at, user,
           <stop offset="0%" style="stop-color:${currentTheme.background};stop-opacity:1" />
           <stop offset="100%" style="stop-color:${currentTheme.backgroundSecondary};stop-opacity:1" />
         </linearGradient>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge> 
+            <feMergeNode in="coloredBlur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
       </defs>
       
       <!-- Background (conditional) -->
       ${transparent ? '' : `<rect width="${width}" height="${height}" rx="12" fill="url(#minimalBg)" stroke="${currentTheme.border}" stroke-width="1"/>`}
       
-      <!-- Status pulse (no left edge bar) -->
-      <circle cx="25" cy="${Math.min(height / 2, 35)}" r="6" fill="${statusColor}">
-        <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite"/>
-      </circle>
+      <!-- Enhanced Modern Status Pulse -->
+      <g transform="translate(25, ${Math.min(height / 2, 35)})">
+        <!-- Outer pulse ring -->
+        <circle cx="0" cy="0" r="12" fill="${statusColor}" opacity="0.1">
+          <animate attributeName="r" values="12;18;12" dur="3s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.1;0;0.1" dur="3s" repeatCount="indefinite"/>
+        </circle>
+        
+        <!-- Middle pulse ring -->
+        <circle cx="0" cy="0" r="8" fill="${statusColor}" opacity="0.2">
+          <animate attributeName="r" values="8;14;8" dur="2.5s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.2;0;0.2" dur="2.5s" repeatCount="indefinite"/>
+        </circle>
+        
+        <!-- Inner pulse ring -->
+        <circle cx="0" cy="0" r="6" fill="${statusColor}" opacity="0.3">
+          <animate attributeName="r" values="6;10;6" dur="2s" repeatCount="indefinite"/>
+          <animate attributeName="opacity" values="0.3;0.1;0.3" dur="2s" repeatCount="indefinite"/>
+        </circle>
+        
+        <!-- Core status indicator -->
+        <circle cx="0" cy="0" r="4" fill="${statusColor}" filter="url(#glow)">
+          <animate attributeName="opacity" values="1;0.7;1" dur="1.5s" repeatCount="indefinite"/>
+        </circle>
+      </g>
       
-      <!-- Main status content -->
-      <text x="40" y="${Math.min(height / 2 - 5, 30)}" fill="${currentTheme.textPrimary}" font-family="'SF Pro Display', -apple-system, system-ui, sans-serif" font-size="${Math.min(width / 25, 16)}" font-weight="600">
+      <!-- Main status content with Inter font -->
+      <text x="45" y="${Math.min(height / 2 - 5, 30)}" fill="${currentTheme.textPrimary}" font-family="Inter, -apple-system, system-ui, sans-serif" font-size="${Math.min(width / 25, 16)}" font-weight="600" letter-spacing="-0.02em">
         ${emoji} ${currentWork}
       </text>
       
-      <!-- Enhanced info line with all stats separated by • -->
-      <text x="40" y="${Math.min(height / 2 + 15, 50)}" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="${Math.min(width / 40, 11)}" textLength="${Math.min(infoItems.join(' • ').length * 7, width - 60)}" lengthAdjust="spacingAndGlyphs">
+      <!-- Enhanced info line with Inter font -->
+      <text x="45" y="${Math.min(height / 2 + 15, 50)}" fill="${currentTheme.textTertiary}" font-family="Inter, system-ui, sans-serif" font-size="${Math.min(width / 40, 11)}" font-weight="400" letter-spacing="-0.01em" textLength="${Math.min(infoItems.join(' • ').length * 7, width - 65)}" lengthAdjust="spacingAndGlyphs">
         ${infoItems.join(' • ')}
       </text>
-      
-      <!-- Subtle coding activity indicator -->
-      <g transform="translate(${width - 18}, ${Math.max(10, height / 8)})" opacity="0.5">
-        <rect x="0" y="0" width="2" height="4" rx="1" fill="${statusColor}">
-          <animate attributeName="height" values="4;8;4" dur="3s" repeatCount="indefinite"/>
-        </rect>
-        <rect x="4" y="1" width="2" height="6" rx="1" fill="${statusColor}">
-          <animate attributeName="height" values="6;3;6" dur="2s" repeatCount="indefinite"/>
-        </rect>
-        <rect x="8" y="0" width="2" height="7" rx="1" fill="${statusColor}">
-          <animate attributeName="height" values="7;10;7" dur="2.5s" repeatCount="indefinite"/>
-        </rect>
-      </g>
     </svg>
   `;
 }
@@ -212,8 +225,8 @@ function generateErrorSVG(width, height, transparent = false) {
     <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none" xmlns="http://www.w3.org/2000/svg">
       ${transparent ? '' : `<rect width="${width}" height="${height}" rx="12" fill="#0d1117" stroke="#f85149" stroke-width="1"/>`}
       <circle cx="25" cy="${height / 2}" r="6" fill="#f85149"/>
-      <text x="40" y="${height / 2 - 5}" fill="#f85149" font-family="system-ui, sans-serif" font-size="14" font-weight="600">❌ Error loading status</text>
-      <text x="40" y="${height / 2 + 15}" fill="#f85149" font-family="system-ui, sans-serif" font-size="11">Check configuration</text>
+      <text x="45" y="${height / 2 - 5}" fill="#f85149" font-family="Inter, system-ui, sans-serif" font-size="14" font-weight="600">❌ Error loading status</text>
+      <text x="45" y="${height / 2 + 15}" fill="#f85149" font-family="Inter, system-ui, sans-serif" font-size="11">Check configuration</text>
     </svg>
   `;
 }
