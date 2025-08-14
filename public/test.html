@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Status Badge Test</title>
+    <style>
+        body {
+            font-family: system-ui, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+
+        .badge-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+
+        h2 {
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🚀 Status Badge Preview</h1>
+
+    <div class="badge-container">
+        <h2>Minimal Style - Default Theme</h2>
+        <img src="/api/badge?username=rahuljangirworks&style=minimal&theme=default" alt="Status Badge">
+    </div>
+
+    <div class="badge-container">
+        <h2>Card Style - Dark Theme</h2>
+        <img src="/api/badge?username=rahuljangirworks&style=card&theme=dark&width=400&height=120" alt="Status Badge">
+    </div>
+
+    <div class="badge-container">
+        <h2>Card Style - GitHub Theme</h2>
+        <img src="/api/badge?username=rahuljangirworks&style=card&theme=github&width=400&height=120" alt="Status Badge">
+    </div>
+</body>
+
+</html>
