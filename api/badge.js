@@ -110,7 +110,7 @@ function generateStatusSVG({ username, status, emoji, message, activity, updated
       </text>
       
       <text x="70" y="42" fill="${currentTheme.textSecondary}" font-family="system-ui, sans-serif" font-size="13" font-weight="500">
-        ${emoji} ${currentWork}
+        ${currentWork}
       </text>
       
       <!-- Enhanced info line -->
