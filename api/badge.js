@@ -4,8 +4,11 @@ export default async function handler(req, res) {
     theme = 'github',
     style = 'minimal',
     width = 450,
-    height = 120
+    height = 120,
+    bg = 'default'
   } = req.query;
+
+  const transparent = bg === 'transparent';
 
   try {
     // Fetch status from your Supabase
@@ -39,7 +42,8 @@ export default async function handler(req, res) {
       theme,
       style,
       width: parseInt(width),
-      height: parseInt(height)
+      height: parseInt(height),
+      transparent
     });
 
     // Set headers
@@ -52,13 +56,13 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Badge Error:', error);
-    const errorSvg = generateErrorSVG(parseInt(width), parseInt(height));
+    const errorSvg = generateErrorSVG(parseInt(width), parseInt(height), transparent);
     res.setHeader('Content-Type', 'image/svg+xml');
     return res.send(errorSvg);
   }
 }
 
-function generateStatusSVG({ status, emoji, message, activity, updated_at, user, location, duration_minutes, theme, style, width, height }) {
+function generateStatusSVG({ status, emoji, message, activity, updated_at, user, location, duration_minutes, theme, style, width, height, transparent }) {
   const themes = getThemes();
   const currentTheme = themes[theme] || themes.github;
   const displayText = activity || message || status;
@@ -71,7 +75,17 @@ function generateStatusSVG({ status, emoji, message, activity, updated_at, user,
   const experience = user.years_experience || 'N/A';
   const currentWork = activity || message || 'Working on projects';
 
-  // Minimal style - Enhanced with realistic data
+  // Build info array with all stats separated by •
+  const infoItems = [
+    location || 'Remote Developer',
+    localTime ? `${localTime} local` : null,
+    timeAgo,
+    duration_minutes ? `Active ${Math.round(duration_minutes)}m` : null,
+    skillsCount > 0 ? `${skillsCount}+ skills` : null,
+    experience !== 'N/A' ? `${experience}y exp` : null
+  ].filter(Boolean);
+
+  // Minimal, professional, responsive design
   return `
     <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none" xmlns="http://www.w3.org/2000/svg">
       <defs>
@@ -81,48 +95,34 @@ function generateStatusSVG({ status, emoji, message, activity, updated_at, user,
         </linearGradient>
       </defs>
       
-      <!-- Background -->
-      <rect width="${width}" height="${height}" rx="12" fill="url(#minimalBg)" stroke="${currentTheme.border}" stroke-width="1"/>
+      <!-- Background (conditional) -->
+      ${transparent ? '' : `<rect width="${width}" height="${height}" rx="12" fill="url(#minimalBg)" stroke="${currentTheme.border}" stroke-width="1"/>`}
       
-      <!-- Status indicator line (left edge) -->
-      <rect x="0" y="0" width="3" height="${height}" rx="2" fill="${statusColor}"/>
-      
-      <!-- Status pulse -->
-      <circle cx="25" cy="30" r="8" fill="${statusColor}">
+      <!-- Status pulse (no left edge bar) -->
+      <circle cx="25" cy="${Math.min(height / 2, 35)}" r="6" fill="${statusColor}">
         <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite"/>
       </circle>
       
-      <!-- Main content -->
-      <text x="45" y="30" fill="${currentTheme.textPrimary}" font-family="'SF Pro Display', -apple-system, system-ui, sans-serif" font-size="16" font-weight="600">
+      <!-- Main status content -->
+      <text x="40" y="${Math.min(height / 2 - 5, 30)}" fill="${currentTheme.textPrimary}" font-family="'SF Pro Display', -apple-system, system-ui, sans-serif" font-size="${Math.min(width / 25, 16)}" font-weight="600">
         ${emoji} ${currentWork}
       </text>
       
-      <!-- Enhanced info line -->
-      <text x="45" y="50" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="11">
-        ${location || 'Remote Developer'}${localTime ? ` • ${localTime} local` : ''}
+      <!-- Enhanced info line with all stats separated by • -->
+      <text x="40" y="${Math.min(height / 2 + 15, 50)}" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="${Math.min(width / 40, 11)}" textLength="${Math.min(infoItems.join(' • ').length * 7, width - 60)}" lengthAdjust="spacingAndGlyphs">
+        ${infoItems.join(' • ')}
       </text>
       
-      <!-- Bottom stats bar -->
-      <g transform="translate(45, 65)">
-        ${timeAgo ? `<text x="0" y="12" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="10">${timeAgo}</text>` : ''}
-        
-        ${duration_minutes ? `<text x="80" y="12" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="10">Active ${Math.round(duration_minutes)}m</text>` : ''}
-        
-        ${skillsCount > 0 ? `<text x="180" y="12" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="10">${skillsCount}+ skills</text>` : ''}
-        
-        ${experience !== 'N/A' ? `<text x="260" y="12" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="10">${experience}y exp</text>` : ''}
-      </g>
-      
       <!-- Subtle coding activity indicator -->
-      <g transform="translate(${width - 15}, 10)" opacity="0.6">
-        <rect x="0" y="0" width="2" height="6" rx="1" fill="${statusColor}">
-          <animate attributeName="height" values="6;12;6" dur="3s" repeatCount="indefinite"/>
+      <g transform="translate(${width - 18}, ${Math.max(10, height / 8)})" opacity="0.5">
+        <rect x="0" y="0" width="2" height="4" rx="1" fill="${statusColor}">
+          <animate attributeName="height" values="4;8;4" dur="3s" repeatCount="indefinite"/>
         </rect>
-        <rect x="4" y="2" width="2" height="8" rx="1" fill="${statusColor}">
-          <animate attributeName="height" values="8;4;8" dur="2s" repeatCount="indefinite"/>
+        <rect x="4" y="1" width="2" height="6" rx="1" fill="${statusColor}">
+          <animate attributeName="height" values="6;3;6" dur="2s" repeatCount="indefinite"/>
         </rect>
-        <rect x="8" y="1" width="2" height="10" rx="1" fill="${statusColor}">
-          <animate attributeName="height" values="10;15;10" dur="2.5s" repeatCount="indefinite"/>
+        <rect x="8" y="0" width="2" height="7" rx="1" fill="${statusColor}">
+          <animate attributeName="height" values="7;10;7" dur="2.5s" repeatCount="indefinite"/>
         </rect>
       </g>
     </svg>
@@ -207,13 +207,13 @@ function getThemes() {
   };
 }
 
-function generateErrorSVG(width, height) {
+function generateErrorSVG(width, height, transparent = false) {
   return `
     <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect width="${width}" height="${height}" rx="12" fill="#0d1117" stroke="#f85149" stroke-width="1"/>
-      <circle cx="25" cy="30" r="8" fill="#f85149"/>
-      <text x="45" y="30" fill="#f85149" font-family="system-ui, sans-serif" font-size="14" font-weight="600">❌ Error loading status</text>
-      <text x="45" y="50" fill="#f85149" font-family="system-ui, sans-serif" font-size="12">Check your configuration</text>
+      ${transparent ? '' : `<rect width="${width}" height="${height}" rx="12" fill="#0d1117" stroke="#f85149" stroke-width="1"/>`}
+      <circle cx="25" cy="${height / 2}" r="6" fill="#f85149"/>
+      <text x="40" y="${height / 2 - 5}" fill="#f85149" font-family="system-ui, sans-serif" font-size="14" font-weight="600">❌ Error loading status</text>
+      <text x="40" y="${height / 2 + 15}" fill="#f85149" font-family="system-ui, sans-serif" font-size="11">Check configuration</text>
     </svg>
   `;
 }

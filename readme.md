@@ -29,7 +29,7 @@ This project is actively maintained.
 
 | Theme | Preview |
 |------|---------|
-| GitHub | ![GitHub](https://github-status-badge.vercel.app/api/badge?username=rahuljangirworks&style=minimal&theme=github&width=350&height=80) |
+| GitHub | ![GitHub](https://github-status-badge.vercel.app/api/badge?username=rahuljangirworks&style=minimal&theme=github&width=350&height=90) |
 | Dark | ![Dark](https://github-status-badge.vercel.app/api/badge?username=rahuljangirworks&style=minimal&theme=dark&width=350&height=80) |
 | Light | ![Light](https://github-status-badge.vercel.app/api/badge?username=rahuljangirworks&style=minimal&theme=light&width=350&height=80) |
 | Default | ![Default](https://github-status-badge.vercel.app/api/badge?username=rahuljangirworks&style=minimal&theme=default&width=350&height=80) |
