@@ -28,7 +28,6 @@ export default async function handler(req, res) {
 
     // Generate enhanced minimal SVG
     const svg = generateStatusSVG({
-      username,
       status: statusData.status || 'offline',
       emoji: statusData.emoji || '💤',
       message: statusData.message || 'Available for work',
@@ -53,19 +52,18 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('Badge Error:', error);
-    const errorSvg = generateErrorSVG(username, parseInt(width), parseInt(height));
+    const errorSvg = generateErrorSVG(parseInt(width), parseInt(height));
     res.setHeader('Content-Type', 'image/svg+xml');
     return res.send(errorSvg);
   }
 }
 
-function generateStatusSVG({ username, status, emoji, message, activity, updated_at, user, location, duration_minutes, theme, style, width, height }) {
+function generateStatusSVG({ status, emoji, message, activity, updated_at, user, location, duration_minutes, theme, style, width, height }) {
   const themes = getThemes();
   const currentTheme = themes[theme] || themes.github;
   const displayText = activity || message || status;
   const timeAgo = updated_at ? getTimeAgo(updated_at) : '';
   const statusColor = getStatusColor(status);
-  const displayName = user.display_name || user.full_name || username;
 
   // Enhanced realistic data
   const localTime = getLocalTime(user.timezone);
@@ -81,9 +79,6 @@ function generateStatusSVG({ username, status, emoji, message, activity, updated
           <stop offset="0%" style="stop-color:${currentTheme.background};stop-opacity:1" />
           <stop offset="100%" style="stop-color:${currentTheme.backgroundSecondary};stop-opacity:1" />
         </linearGradient>
-        <clipPath id="avatarClip">
-          <circle cx="35" cy="35" r="20"/>
-        </clipPath>
       </defs>
       
       <!-- Background -->
@@ -92,34 +87,23 @@ function generateStatusSVG({ username, status, emoji, message, activity, updated
       <!-- Status indicator line (left edge) -->
       <rect x="0" y="0" width="3" height="${height}" rx="2" fill="${statusColor}"/>
       
-      <!-- Avatar -->
-      <circle cx="35" cy="35" r="20" fill="${currentTheme.avatarBg}" stroke="${statusColor}" stroke-width="2"/>
-      ${user.avatar_url ?
-      `<image x="15" y="15" width="40" height="40" href="${user.avatar_url}" clip-path="url(#avatarClip)"/>` :
-      `<text x="35" y="42" fill="${currentTheme.textPrimary}" font-family="system-ui, sans-serif" font-size="18" text-anchor="middle">👨‍💻</text>`
-    }
-      
       <!-- Status pulse -->
-      <circle cx="50" cy="50" r="5" fill="${statusColor}">
+      <circle cx="25" cy="30" r="8" fill="${statusColor}">
         <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite"/>
       </circle>
       
       <!-- Main content -->
-      <text x="70" y="25" fill="${currentTheme.textPrimary}" font-family="'SF Pro Display', -apple-system, system-ui, sans-serif" font-size="18" font-weight="600">
-        ${displayName}
-      </text>
-      
-      <text x="70" y="42" fill="${currentTheme.textSecondary}" font-family="system-ui, sans-serif" font-size="13" font-weight="500">
-        ${currentWork}
+      <text x="45" y="30" fill="${currentTheme.textPrimary}" font-family="'SF Pro Display', -apple-system, system-ui, sans-serif" font-size="16" font-weight="600">
+        ${emoji} ${currentWork}
       </text>
       
       <!-- Enhanced info line -->
-      <text x="70" y="58" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="11">
+      <text x="45" y="50" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="11">
         ${location || 'Remote Developer'}${localTime ? ` • ${localTime} local` : ''}
       </text>
       
       <!-- Bottom stats bar -->
-      <g transform="translate(70, 75)">
+      <g transform="translate(45, 65)">
         ${timeAgo ? `<text x="0" y="12" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="10">${timeAgo}</text>` : ''}
         
         ${duration_minutes ? `<text x="80" y="12" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="10">Active ${Math.round(duration_minutes)}m</text>` : ''}
@@ -223,14 +207,13 @@ function getThemes() {
   };
 }
 
-function generateErrorSVG(username, width, height) {
+function generateErrorSVG(width, height) {
   return `
     <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none" xmlns="http://www.w3.org/2000/svg">
       <rect width="${width}" height="${height}" rx="12" fill="#0d1117" stroke="#f85149" stroke-width="1"/>
-      <circle cx="35" cy="35" r="20" fill="#21262d" stroke="#f85149" stroke-width="2"/>
-      <text x="35" y="42" fill="#f85149" font-family="system-ui, sans-serif" font-size="16" text-anchor="middle">❌</text>
-      <text x="70" y="30" fill="#f85149" font-family="system-ui, sans-serif" font-size="16" font-weight="600">@${username}</text>
-      <text x="70" y="50" fill="#f85149" font-family="system-ui, sans-serif" font-size="12">Error loading status</text>
+      <circle cx="25" cy="30" r="8" fill="#f85149"/>
+      <text x="45" y="30" fill="#f85149" font-family="system-ui, sans-serif" font-size="14" font-weight="600">❌ Error loading status</text>
+      <text x="45" y="50" fill="#f85149" font-family="system-ui, sans-serif" font-size="12">Check your configuration</text>
     </svg>
   `;
 }
