@@ -1,5 +1,7 @@
-## 👋 Hey there! I'm Rahul
+![Status](https://github-status-badge.vercel.app/api/badge?username=rahuljangirworks&style=card&theme=github&width=400&height=130)
 
-![Status](https://github-status-badge.vercel.app/api/badge?username=rahuljangirworks&width=450&height=140)
 
-*This badge updates automatically based on my real-time status*
+![Status](https://github-status-badge.vercel.app/api/badge?username=rahuljangirworks&style=minimal&theme=light&width=350&height=80)
+
+
+![Status](https://github-status-badge.vercel.app/api/badge?username=rahuljangirworks&style=modern&theme=github&width=450&height=140)

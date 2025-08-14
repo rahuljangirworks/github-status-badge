@@ -2,9 +2,9 @@ export default async function handler(req, res) {
   const {
     username = 'default',
     theme = 'github',
-    style = 'modern',
+    style = 'minimal',
     width = 450,
-    height = 140
+    height = 120
   } = req.query;
 
   try {
@@ -26,18 +26,15 @@ export default async function handler(req, res) {
     const statusData = result.success ? result.data : {};
     const userData = statusData.user || {};
 
-    // Generate SVG with rich data
+    // Generate enhanced minimal SVG
     const svg = generateStatusSVG({
       username,
       status: statusData.status || 'offline',
       emoji: statusData.emoji || '💤',
-      message: statusData.message || 'Not available',
+      message: statusData.message || 'Available for work',
       activity: statusData.activity || '',
       updated_at: statusData.updated_at,
       user: userData,
-      focus_level: statusData.focus_level,
-      mood_level: statusData.mood_level,
-      energy_level: statusData.energy_level,
       location: `${userData.city || ''}, ${userData.country || ''}`.replace(/^,\s*|,\s*$/g, ''),
       duration_minutes: statusData.status_duration_minutes,
       theme,
@@ -62,210 +59,90 @@ export default async function handler(req, res) {
   }
 }
 
-function generateStatusSVG({ username, status, emoji, message, activity, updated_at, user, focus_level, mood_level, energy_level, location, duration_minutes, theme, style, width, height }) {
+function generateStatusSVG({ username, status, emoji, message, activity, updated_at, user, location, duration_minutes, theme, style, width, height }) {
   const themes = getThemes();
   const currentTheme = themes[theme] || themes.github;
   const displayText = activity || message || status;
   const timeAgo = updated_at ? getTimeAgo(updated_at) : '';
   const statusColor = getStatusColor(status);
   const displayName = user.display_name || user.full_name || username;
-  const title = user.title || 'Developer';
-  const company = user.current_company || user.company;
 
-  // Calculate local time
+  // Enhanced realistic data
   const localTime = getLocalTime(user.timezone);
+  const skillsCount = user.skills ? user.skills.length : 0;
+  const experience = user.years_experience || 'N/A';
+  const currentWork = activity || message || 'Working on projects';
 
-  if (style === 'modern' || style === 'github') {
-    return `
-            <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:${currentTheme.background};stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:${currentTheme.backgroundSecondary};stop-opacity:1" />
-                    </linearGradient>
-                    <filter id="glow">
-                        <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
-                        <feMerge> 
-                            <feMergeNode in="coloredBlur"/>
-                            <feMergeNode in="SourceGraphic"/>
-                        </feMerge>
-                    </filter>
-                    <clipPath id="avatar">
-                        <circle cx="30" cy="35" r="16"/>
-                    </clipPath>
-                </defs>
-                
-                <!-- Main Background -->
-                <rect width="${width}" height="${height}" rx="12" fill="url(#bg)" stroke="${currentTheme.border}" stroke-width="1"/>
-                
-                <!-- Status Bar (Left Edge) -->
-                <rect x="0" y="0" width="4" height="${height}" rx="2" fill="${statusColor}" filter="url(#glow)"/>
-                
-                <!-- Header Section -->
-                <rect x="8" y="8" width="${width - 16}" height="54" rx="8" fill="${currentTheme.headerBg}" opacity="0.4"/>
-                
-                <!-- Avatar -->
-                <circle cx="30" cy="35" r="16" fill="${currentTheme.avatarBg}" stroke="${statusColor}" stroke-width="2"/>
-                ${user.avatar_url ?
-        `<image x="14" y="19" width="32" height="32" href="${user.avatar_url}" clip-path="url(#avatar)"/>` :
-        `<text x="30" y="41" fill="${currentTheme.textPrimary}" font-family="system-ui, sans-serif" font-size="16" text-anchor="middle">👨‍💻</text>`
-      }
-                
-                <!-- Status Indicator -->
-                <circle cx="42" cy="47" r="6" fill="${statusColor}">
-                    <animate attributeName="opacity" values="1;0.6;1" dur="2s" repeatCount="indefinite"/>
-                </circle>
-                
-                <!-- User Info -->
-                <text x="55" y="30" fill="${currentTheme.textPrimary}" font-family="'SF Pro Display', system-ui, sans-serif" font-size="16" font-weight="600">
-                    ${displayName}
-                </text>
-                <text x="55" y="45" fill="${currentTheme.textSecondary}" font-family="system-ui, sans-serif" font-size="12">
-                    ${title}${company ? ` at ${company}` : ''}
-                </text>
-                
-                <!-- Location & Time -->
-                ${location || localTime ? `
-                    <text x="55" y="58" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="10">
-                        ${location ? `📍 ${location}` : ''}${location && localTime ? ' • ' : ''}${localTime ? `🕐 ${localTime}` : ''}
-                    </text>
-                ` : ''}
-                
-                <!-- Status Section -->
-                <rect x="15" y="70" width="${width - 30}" height="45" rx="8" fill="${currentTheme.statusBg}" opacity="0.3"/>
-                
-                <!-- Status Content -->
-                <text x="25" y="88" fill="${currentTheme.textPrimary}" font-family="system-ui, sans-serif" font-size="20">
-                    ${emoji}
-                </text>
-                <text x="50" y="88" fill="${currentTheme.textPrimary}" font-family="system-ui, sans-serif" font-size="14" font-weight="500">
-                    ${status.charAt(0).toUpperCase() + status.slice(1)}
-                </text>
-                
-                <!-- Status Message -->
-                <text x="25" y="105" fill="${currentTheme.textSecondary}" font-family="system-ui, sans-serif" font-size="12" textLength="${Math.min(displayText.length * 7, width - 50)}" lengthAdjust="spacingAndGlyphs">
-                    ${displayText}
-                </text>
-                
-                <!-- Bottom Info Bar -->
-                <g transform="translate(15, 120)">
-                    <!-- Time Ago -->
-                    ${timeAgo ? `
-                        <text x="0" y="12" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="9">
-                            🕒 ${timeAgo}
-                        </text>
-                    ` : ''}
-                    
-                    <!-- Duration -->
-                    ${duration_minutes ? `
-                        <text x="80" y="12" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="9">
-                            ⏱️ ${Math.round(duration_minutes)}m
-                        </text>
-                    ` : ''}
-                    
-                    <!-- Levels -->
-                    ${focus_level || mood_level || energy_level ? `
-                        <g transform="translate(${width - 120}, 0)">
-                            ${focus_level ? `<text x="0" y="12" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="9">🎯${focus_level}</text>` : ''}
-                            ${mood_level ? `<text x="25" y="12" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="9">😊${mood_level}</text>` : ''}
-                            ${energy_level ? `<text x="50" y="12" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="9">⚡${energy_level}</text>` : ''}
-                        </g>
-                    ` : ''}
-                </g>
-                
-                <!-- GitHub-style contribution graph inspired pattern (subtle) -->
-                <g opacity="0.1">
-                    ${Array.from({ length: 8 }, (_, i) =>
-        `<rect x="${width - 25}" y="${10 + i * 3}" width="2" height="2" rx="1" fill="${statusColor}"/>`
-      ).join('')}
-                </g>
-            </svg>
-        `;
-  }
-
-  // Card style - Enhanced
-  if (style === 'card') {
-    return `
-            <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                    <linearGradient id="cardBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" style="stop-color:${currentTheme.background};stop-opacity:1" />
-                        <stop offset="100%" style="stop-color:${currentTheme.backgroundSecondary};stop-opacity:1" />
-                    </linearGradient>
-                    <filter id="shadow">
-                        <feDropShadow dx="0" dy="4" stdDeviation="12" flood-opacity="0.15"/>
-                    </filter>
-                </defs>
-                
-                <rect width="${width}" height="${height}" rx="16" fill="url(#cardBg)" filter="url(#shadow)" stroke="${currentTheme.border}" stroke-width="1"/>
-                
-                <!-- Header with gradient -->
-                <rect width="${width}" height="50" rx="16" fill="${statusColor}" opacity="0.1"/>
-                
-                <!-- Avatar with status ring -->
-                <circle cx="35" cy="35" r="18" fill="${currentTheme.avatarBg}" stroke="${statusColor}" stroke-width="3"/>
-                ${user.avatar_url ?
-        `<image x="17" y="17" width="36" height="36" href="${user.avatar_url}" clip-path="url(#avatar)"/>` :
-        `<text x="35" y="42" fill="${currentTheme.textPrimary}" font-family="system-ui, sans-serif" font-size="18" text-anchor="middle">👨‍💻</text>`
-      }
-                
-                <!-- User details -->
-                <text x="65" y="25" fill="${currentTheme.textPrimary}" font-family="system-ui, sans-serif" font-size="18" font-weight="700">
-                    ${displayName}
-                </text>
-                <text x="65" y="40" fill="${currentTheme.textSecondary}" font-family="system-ui, sans-serif" font-size="12">
-                    ${title}${company ? ` • ${company}` : ''}
-                </text>
-                <text x="65" y="52" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="10">
-                    ${location || 'Remote'}${localTime ? ` • ${localTime}` : ''}
-                </text>
-                
-                <!-- Status section -->
-                <rect x="20" y="65" width="${width - 40}" height="50" rx="10" fill="${currentTheme.statusBg}" opacity="0.4"/>
-                
-                <text x="35" y="85" fill="${currentTheme.textPrimary}" font-family="system-ui, sans-serif" font-size="24">
-                    ${emoji}
-                </text>
-                <text x="65" y="82" fill="${currentTheme.textPrimary}" font-family="system-ui, sans-serif" font-size="16" font-weight="600">
-                    ${status.charAt(0).toUpperCase() + status.slice(1)}
-                </text>
-                <text x="35" y="100" fill="${currentTheme.textSecondary}" font-family="system-ui, sans-serif" font-size="12">
-                    ${displayText}
-                </text>
-                <text x="35" y="112" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="9">
-                    ${timeAgo}${duration_minutes ? ` • Active for ${Math.round(duration_minutes)}m` : ''}
-                </text>
-            </svg>
-        `;
-  }
-
-  // Minimal style - Clean and simple
+  // Minimal style - Enhanced with realistic data
   return `
-        <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-                <linearGradient id="minimalBg" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" style="stop-color:${currentTheme.background};stop-opacity:1" />
-                    <stop offset="100%" style="stop-color:${currentTheme.backgroundSecondary};stop-opacity:1" />
-                </linearGradient>
-            </defs>
-            
-            <rect width="${width}" height="${height}" rx="12" fill="url(#minimalBg)" stroke="${currentTheme.border}" stroke-width="1"/>
-            
-            <circle cx="25" cy="30" r="8" fill="${statusColor}">
-                <animate attributeName="opacity" values="1;0.5;1" dur="2s" repeatCount="indefinite"/>
-            </circle>
-            
-            <text x="45" y="25" fill="${currentTheme.textPrimary}" font-family="system-ui, sans-serif" font-size="14" font-weight="600">
-                ${displayName}
-            </text>
-            <text x="45" y="40" fill="${currentTheme.textSecondary}" font-family="system-ui, sans-serif" font-size="12">
-                ${emoji} ${displayText}
-            </text>
-            <text x="45" y="55" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="10">
-                ${location ? `📍 ${location}` : ''}${timeAgo ? ` • ${timeAgo}` : ''}
-            </text>
-        </svg>
-    `;
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="minimalBg" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:${currentTheme.background};stop-opacity:1" />
+          <stop offset="100%" style="stop-color:${currentTheme.backgroundSecondary};stop-opacity:1" />
+        </linearGradient>
+        <clipPath id="avatarClip">
+          <circle cx="35" cy="35" r="20"/>
+        </clipPath>
+      </defs>
+      
+      <!-- Background -->
+      <rect width="${width}" height="${height}" rx="12" fill="url(#minimalBg)" stroke="${currentTheme.border}" stroke-width="1"/>
+      
+      <!-- Status indicator line (left edge) -->
+      <rect x="0" y="0" width="3" height="${height}" rx="2" fill="${statusColor}"/>
+      
+      <!-- Avatar -->
+      <circle cx="35" cy="35" r="20" fill="${currentTheme.avatarBg}" stroke="${statusColor}" stroke-width="2"/>
+      ${user.avatar_url ?
+      `<image x="15" y="15" width="40" height="40" href="${user.avatar_url}" clip-path="url(#avatarClip)"/>` :
+      `<text x="35" y="42" fill="${currentTheme.textPrimary}" font-family="system-ui, sans-serif" font-size="18" text-anchor="middle">👨‍💻</text>`
+    }
+      
+      <!-- Status pulse -->
+      <circle cx="50" cy="50" r="5" fill="${statusColor}">
+        <animate attributeName="opacity" values="1;0.4;1" dur="2s" repeatCount="indefinite"/>
+      </circle>
+      
+      <!-- Main content -->
+      <text x="70" y="25" fill="${currentTheme.textPrimary}" font-family="'SF Pro Display', -apple-system, system-ui, sans-serif" font-size="18" font-weight="600">
+        ${displayName}
+      </text>
+      
+      <text x="70" y="42" fill="${currentTheme.textSecondary}" font-family="system-ui, sans-serif" font-size="13" font-weight="500">
+        ${emoji} ${currentWork}
+      </text>
+      
+      <!-- Enhanced info line -->
+      <text x="70" y="58" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="11">
+        ${location || 'Remote Developer'}${localTime ? ` • ${localTime} local` : ''}
+      </text>
+      
+      <!-- Bottom stats bar -->
+      <g transform="translate(70, 75)">
+        ${timeAgo ? `<text x="0" y="12" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="10">${timeAgo}</text>` : ''}
+        
+        ${duration_minutes ? `<text x="80" y="12" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="10">Active ${Math.round(duration_minutes)}m</text>` : ''}
+        
+        ${skillsCount > 0 ? `<text x="180" y="12" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="10">${skillsCount}+ skills</text>` : ''}
+        
+        ${experience !== 'N/A' ? `<text x="260" y="12" fill="${currentTheme.textTertiary}" font-family="system-ui, sans-serif" font-size="10">${experience}y exp</text>` : ''}
+      </g>
+      
+      <!-- Subtle coding activity indicator -->
+      <g transform="translate(${width - 15}, 10)" opacity="0.6">
+        <rect x="0" y="0" width="2" height="6" rx="1" fill="${statusColor}">
+          <animate attributeName="height" values="6;12;6" dur="3s" repeatCount="indefinite"/>
+        </rect>
+        <rect x="4" y="2" width="2" height="8" rx="1" fill="${statusColor}">
+          <animate attributeName="height" values="8;4;8" dur="2s" repeatCount="indefinite"/>
+        </rect>
+        <rect x="8" y="1" width="2" height="10" rx="1" fill="${statusColor}">
+          <animate attributeName="height" values="10;15;10" dur="2.5s" repeatCount="indefinite"/>
+        </rect>
+      </g>
+    </svg>
+  `;
 }
 
 function getLocalTime(timezone) {
@@ -342,29 +219,18 @@ function getThemes() {
       textSecondary: '#656d76',
       textTertiary: '#7d8590',
       border: '#d0d7de'
-    },
-    default: {
-      background: '#ffffff',
-      backgroundSecondary: '#f8fafc',
-      headerBg: '#f1f5f9',
-      statusBg: '#e2e8f0',
-      avatarBg: '#e2e8f0',
-      textPrimary: '#1e293b',
-      textSecondary: '#64748b',
-      textTertiary: '#94a3b8',
-      border: '#e2e8f0'
     }
   };
 }
 
 function generateErrorSVG(username, width, height) {
   return `
-        <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <rect width="${width}" height="${height}" rx="12" fill="#0d1117" stroke="#f85149" stroke-width="1"/>
-            <circle cx="30" cy="35" r="8" fill="#f85149"/>
-            <text x="50" y="30" fill="#f85149" font-family="system-ui, sans-serif" font-size="14" font-weight="600">@${username}</text>
-            <text x="50" y="45" fill="#f85149" font-family="system-ui, sans-serif" font-size="12">❌ Error loading status</text>
-            <text x="50" y="60" fill="#7d8590" font-family="system-ui, sans-serif" font-size="10">Check your configuration</text>
-        </svg>
-    `;
+    <svg width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${width}" height="${height}" rx="12" fill="#0d1117" stroke="#f85149" stroke-width="1"/>
+      <circle cx="35" cy="35" r="20" fill="#21262d" stroke="#f85149" stroke-width="2"/>
+      <text x="35" y="42" fill="#f85149" font-family="system-ui, sans-serif" font-size="16" text-anchor="middle">❌</text>
+      <text x="70" y="30" fill="#f85149" font-family="system-ui, sans-serif" font-size="16" font-weight="600">@${username}</text>
+      <text x="70" y="50" fill="#f85149" font-family="system-ui, sans-serif" font-size="12">Error loading status</text>
+    </svg>
+  `;
 }
